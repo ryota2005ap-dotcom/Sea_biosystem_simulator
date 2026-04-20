@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>Marine Ecosystem Simulation (Configurable)</title>
+<style>
+body{margin:0;background:#111;color:#eee;font-family:sans-serif;display:flex}
+#ui{padding:10px;width:240px;background:#222}
+canvas{border:1px solid #444}
+label{display:block;margin-top:6px;font-size:12px}
+.row{display:flex;gap:6px;align-items:center}
+.row input[type="range"]{flex:1}
+.row input[type="number"]{width:70px}
+button{margin-top:8px;width:100%}
+</style>
+</head>
+<body>
+<div id="ui">
+<b>初期個数</b>
+<label>Nutrient<input id="initN" type="number" value="50"></label>
+<label>Plankton<input id="initP" type="number" value="400"></label>
+<label>SmallFish<input id="initS" type="number" value="200"></label>
+<label>BigFish<input id="initB" type="number" value="80"></label>
+
+<b>分裂確率</b>
+<label>N
+  <div class="row">
+    <input id="splitN" type="range" min="0" max="1" step="0.01" value="0.0">
+    <input id="splitN_num" type="number" min="0" max="1" step="0.01" value="0">
+  </div>
+</label>
+<label>P
+  <div class="row">
+    <input id="splitP" type="range" min="0" max="1" step="0.01" value="0.0">
+    <input id="splitP_num" type="number" min="0" max="1" step="0.01" value="0.0">
+  </div>
+</label>
+<label>S
+  <div class="row">
+    <input id="splitS" type="range" min="0" max="1" step="0.01" value="0">
+    <input id="splitS_num" type="number" min="0" max="1" step="0.01" value="0">
+  </div>
+</label>
+<label>B
+  <div class="row">
+    <input id="splitB" type="range" min="0" max="1" step="0.01" value="0">
+    <input id="splitB_num" type="number" min="0" max="1" step="0.01" value="0">
+  </div>
+</label>
+
+<b>死亡確率</b>
+<label>N
+  <div class="row">
+    <input id="deathN" type="range" min="0" max="1" step="0.01" value="0.01">
+    <input id="deathN_num" type="number" min="0" max="1" step="0.01" value="0.01">
+  </div>
+</label>
+<label>P
+  <div class="row">
+    <input id="deathP" type="range" min="0" max="1" step="0.01" value="0.02">
+    <input id="deathP_num" type="number" min="0" max="1" step="0.01" value="0.02">
+  </div>
+</label>
+<label>S
+  <div class="row">
+    <input id="deathS" type="range" min="0" max="1" step="0.01" value="0.02">
+    <input id="deathS_num" type="number" min="0" max="1" step="0.01" value="0.02">
+  </div>
+</label>
+<label>B
+  <div class="row">
+    <input id="deathB" type="range" min="0" max="1" step="0.01" value="0.02">
+    <input id="deathB_num" type="number" min="0" max="1" step="0.01" value="0.02">
+  </div>
+</label>
+
+<button onclick="resetSim()">RESET</button>
+</div>
+
+<canvas id="canvas" width="400" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const GRID=40;
+const SIZE=canvas.width/GRID;
+let agents=[];
+let frame=0;
+
+function randPos(){return Math.floor(Math.random()*GRID)}
+
+function resetSim(){
+  agents=[];
+  const n=+initN.value,p=+initP.value,s=+initS.value,b=+initB.value;
+  for(let i=0;i<n;i++)agents.push({x:0,y:0,type:'nutrient'});
+  for(let i=0;i<p;i++)agents.push({x:randPos(),y:randPos(),type:'plankton'});
+  for(let i=0;i<s;i++)agents.push({x:randPos(),y:randPos(),type:'smallFish'});
+  for(let i=0;i<b;i++)agents.push({x:randPos(),y:randPos(),type:'bigFish'});
+}
+
+// 同期ヘルパ
+function bindPair(rangeEl, numEl){
+  rangeEl.addEventListener('input',()=>{ numEl.value = rangeEl.value; });
+  numEl.addEventListener('input',()=>{
+    let v = Math.max(0, Math.min(1, parseFloat(numEl.value)||0));
+    numEl.value = v;
+    rangeEl.value = v;
+  });
+}
+
+// バインド
+bindPair(splitN, splitN_num);
+bindPair(splitP, splitP_num);
+bindPair(splitS, splitS_num);
+bindPair(splitB, splitB_num);
+bindPair(deathN, deathN_num);
+bindPair(deathP, deathP_num);
+bindPair(deathS, deathS_num);
+bindPair(deathB, deathB_num);
+
+resetSim();
+
+function move(a){
+  a.x=(a.x+Math.floor(Math.random()*3)-1+GRID)%GRID;
+  a.y=(a.y+Math.floor(Math.random()*3)-1+GRID)%GRID;
+}
+
+function update(){
+  // 左上から栄養供給
+  for(let i=0;i<5;i++)agents.push({x:0,y:0,type:'nutrient'});
+
+  agents.forEach(move);
+
+  let map={};
+  agents.forEach(a=>{
+    let k=a.x+','+a.y;
+    if(!map[k])map[k]=[];
+    map[k].push(a);
+  });
+
+  let next=[];
+
+  for(let k in map){
+    let cell=map[k];
+    let hasN=cell.find(a=>a.type==='nutrient');
+    let hasP=cell.find(a=>a.type==='plankton');
+    let hasS=cell.find(a=>a.type==='smallFish');
+    let hasB=cell.find(a=>a.type==='bigFish');
+
+    // 捕食変換
+    if(hasN && Math.random()<splitP.value) next.push({x:hasN.x,y:hasN.y,type:'plankton'});
+    else if(hasP && hasS && Math.random()<splitS.value) next.push({x:hasP.x,y:hasP.y,type:'smallFish'});
+    else if(hasS && hasB && Math.random()<splitB.value) next.push({x:hasS.x,y:hasS.y,type:'bigFish'});
+    else next.push(...cell);
+  }
+
+  // 分裂
+  next.forEach(a=>{
+    let prob= a.type==='nutrient'?splitN.value:
+              a.type==='plankton'?splitP.value:
+              a.type==='smallFish'?splitS.value:splitB.value;
+    if(Math.random()<prob){
+      next.push({x:a.x,y:a.y,type:a.type});
+    }
+  });
+
+  // 死亡
+  agents=next.filter(a=>{
+    let prob= a.type==='nutrient'?deathN.value:
+              a.type==='plankton'?deathP.value:
+              a.type==='smallFish'?deathS.value:deathB.value;
+    return Math.random()>prob;
+  });
+}
+
+function draw(){
+  ctx.fillStyle='white';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  agents.forEach(a=>{
+    let c='black';
+    if(a.type==='nutrient')c='blue';
+    if(a.type==='plankton')c='green';
+    if(a.type==='smallFish')c='yellow';
+    if(a.type==='bigFish')c='red';
+    ctx.fillStyle=c;
+    ctx.fillRect(a.x*SIZE,a.y*SIZE,SIZE,SIZE);
+  });
+}
+
+function loop(){
+  frame++;
+  if(frame%10===0)update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>

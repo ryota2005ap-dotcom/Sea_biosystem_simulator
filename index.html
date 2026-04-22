@@ -2,199 +2,264 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<title>Marine Ecosystem Simulation (Configurable)</title>
+<title>Marine Ecosystem - Advanced Stacked Simulation</title>
 <style>
-body{margin:0;background:#111;color:#eee;font-family:sans-serif;display:flex}
-#ui{padding:10px;width:240px;background:#222}
-canvas{border:1px solid #444}
-label{display:block;margin-top:6px;font-size:12px}
-.row{display:flex;gap:6px;align-items:center}
-.row input[type="range"]{flex:1}
-.row input[type="number"]{width:70px}
-button{margin-top:8px;width:100%}
+  body { margin: 0; background: #111; color: #eee; font-family: sans-serif; display: flex; overflow: hidden; }
+  #ui { padding: 15px; width: 260px; background: #222; height: 100vh; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.5); z-index: 10; }
+  #main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1a1a; }
+  canvas { border: 1px solid #444; background: #fff; }
+  #sim { width: 500px; height: 500px; image-rendering: pixelated; }
+  .charts-container { display: flex; flex-direction: column; gap: 10px; padding: 10px; background: #222; width: 320px; }
+  #pieChart { width: 320px; height: 180px; }
+  #lineChart { width: 320px; height: 400px; }
+  label { display: block; margin-top: 8px; font-size: 11px; color: #bbb; }
+  .row { display: flex; gap: 6px; align-items: center; }
+  .row input[type="range"] { flex: 1; }
+  .row input[type="number"] { width: 55px; background: #333; color: #fff; border: 1px solid #555; }
+  button { margin-top: 15px; width: 100%; padding: 10px; background: #068; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
+  button:hover { background: #08a; }
+  b { color: #0cf; font-size: 14px; display: block; margin-top: 10px; border-bottom: 1px solid #444; padding-bottom: 3px; }
 </style>
 </head>
 <body>
+
 <div id="ui">
-<b>初期個数</b>
-<label>Nutrient<input id="initN" type="number" value="50"></label>
-<label>Plankton<input id="initP" type="number" value="400"></label>
-<label>SmallFish<input id="initS" type="number" value="200"></label>
-<label>BigFish<input id="initB" type="number" value="80"></label>
+  <b>初期個数</b>
+  <label>Nutrient<input id="initN" type="number" value="200"></label>
+  <label>Plankton<input id="initP" type="number" value="300"></label>
+  <label>SmallFish<input id="initS" type="number" value="150"></label>
+  <label>BigFish<input id="initB" type="number" value="50"></label>
 
-<b>分裂確率</b>
-<label>N
-  <div class="row">
-    <input id="splitN" type="range" min="0" max="1" step="0.01" value="0.0">
-    <input id="splitN_num" type="number" min="0" max="1" step="0.01" value="0">
-  </div>
-</label>
-<label>P
-  <div class="row">
-    <input id="splitP" type="range" min="0" max="1" step="0.01" value="0.0">
-    <input id="splitP_num" type="number" min="0" max="1" step="0.01" value="0.0">
-  </div>
-</label>
-<label>S
-  <div class="row">
-    <input id="splitS" type="range" min="0" max="1" step="0.01" value="0">
-    <input id="splitS_num" type="number" min="0" max="1" step="0.01" value="0">
-  </div>
-</label>
-<label>B
-  <div class="row">
-    <input id="splitB" type="range" min="0" max="1" step="0.01" value="0">
-    <input id="splitB_num" type="number" min="0" max="1" step="0.01" value="0">
-  </div>
-</label>
+  <b>繁殖確率</b>
+  <label>P (分列)<div class="row"><input id="splitP" type="range" min="0" max="1" step="0.01" value="1"><input id="splitP_num" type="number" value="1"></div></label>
+  <label>S (繁殖)<div class="row"><input id="splitS" type="range" min="0" max="1" step="0.01" value="0.5"><input id="splitS_num" type="number" value="0.5"></div></label>
+  <label>B (繁殖)<div class="row"><input id="splitB" type="range" min="0" max="1" step="0.01" value="0.3"><input id="splitB_num" type="number" value="0.3"></div></label>
 
-<b>死亡確率</b>
-<label>N
-  <div class="row">
-    <input id="deathN" type="range" min="0" max="1" step="0.01" value="0.01">
-    <input id="deathN_num" type="number" min="0" max="1" step="0.01" value="0.01">
-  </div>
-</label>
-<label>P
-  <div class="row">
-    <input id="deathP" type="range" min="0" max="1" step="0.01" value="0.02">
-    <input id="deathP_num" type="number" min="0" max="1" step="0.01" value="0.02">
-  </div>
-</label>
-<label>S
-  <div class="row">
-    <input id="deathS" type="range" min="0" max="1" step="0.01" value="0.02">
-    <input id="deathS_num" type="number" min="0" max="1" step="0.01" value="0.02">
-  </div>
-</label>
-<label>B
-  <div class="row">
-    <input id="deathB" type="range" min="0" max="1" step="0.01" value="0.02">
-    <input id="deathB_num" type="number" min="0" max="1" step="0.01" value="0.02">
-  </div>
-</label>
+  <b>死亡確率</b>
+  <label>N<div class="row"><input id="deathN" type="range" min="0" max="1" step="0" value="0"><input id="deathN_num" type="number" value="0"></div></label>
+  <label>P<div class="row"><input id="deathP" type="range" min="0" max="1" step="0.01" value="0"><input id="deathP_num" type="number" value="0"></div></label>
+  <label>S<div class="row"><input id="deathS" type="range" min="0" max="1" step="0.01" value="0.02"><input id="deathS_num" type="number" value="0.02"></div></label>
+  <label>B<div class="row"><input id="deathB" type="range" min="0" max="1" step="0.01" value="0.01"><input id="deathB_num" type="number" value="0.01"></div></label>
 
-<button onclick="resetSim()">RESET</button>
+  <b>栄養源供給</b>
+  <label><input type="checkbox" id="srcTL" checked> 左上</label>
+  <label><input type="checkbox" id="srcTR" checked> 右上</label>
+  <label><input type="checkbox" id="srcBL" checked> 左下</label>
+  <label><input type="checkbox" id="srcBR" checked> 右下</label>
+  <label><input type="checkbox" id="srcC" checked> 中央</label>
+
+  <button onclick="resetSim()">RESET SIMULATION</button>
 </div>
 
-<canvas id="canvas" width="400" height="400"></canvas>
+<div id="main">
+  <canvas id="sim" width="400" height="400"></canvas>
+</div>
+
+<div class="charts-container">
+  <canvas id="pieChart" width="320" height="180"></canvas>
+  <canvas id="lineChart" width="320" height="400"></canvas>
+</div>
 
 <script>
-const canvas=document.getElementById('canvas');
-const ctx=canvas.getContext('2d');
-const GRID=40;
-const SIZE=canvas.width/GRID;
-let agents=[];
-let frame=0;
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+const pctx = document.getElementById('pieChart').getContext('2d');
+const lctx = document.getElementById('lineChart').getContext('2d');
 
-function randPos(){return Math.floor(Math.random()*GRID)}
+const GRID = 40;
+const SIZE = canvas.width / GRID;
+let agents = [];
+let history = [];
+const MAX_HISTORY = 180; // 約10秒分（3倍に増加）
+let frame = 0;
 
-function resetSim(){
-  agents=[];
-  const n=+initN.value,p=+initP.value,s=+initS.value,b=+initB.value;
-  for(let i=0;i<n;i++)agents.push({x:0,y:0,type:'nutrient'});
-  for(let i=0;i<p;i++)agents.push({x:randPos(),y:randPos(),type:'plankton'});
-  for(let i=0;i<s;i++)agents.push({x:randPos(),y:randPos(),type:'smallFish'});
-  for(let i=0;i<b;i++)agents.push({x:randPos(),y:randPos(),type:'bigFish'});
+const COLORS = {
+  bigFish: '#ff4d4d',
+  smallFish: '#ffae42',
+  plankton: '#2ecc71',
+  nutrient: '#3498db'
+};
+
+const KEYS_STACK = ['bigFish', 'smallFish', 'plankton', 'nutrient'];
+
+function randPos() { return Math.floor(Math.random() * GRID); }
+
+function resetSim() {
+  agents = [];
+  history = [];
+  for(let i=0; i<+initN.value; i++) agents.push({x:randPos(), y:randPos(), type:'nutrient'});
+  for(let i=0; i<+initP.value; i++) agents.push({x:randPos(), y:randPos(), type:'plankton'});
+  for(let i=0; i<+initS.value; i++) agents.push({x:randPos(), y:randPos(), type:'smallFish'});
+  for(let i=0; i<+initB.value; i++) agents.push({x:randPos(), y:randPos(), type:'bigFish'});
 }
 
-// 同期ヘルパ
-function bindPair(rangeEl, numEl){
-  rangeEl.addEventListener('input',()=>{ numEl.value = rangeEl.value; });
-  numEl.addEventListener('input',()=>{
-    let v = Math.max(0, Math.min(1, parseFloat(numEl.value)||0));
-    numEl.value = v;
-    rangeEl.value = v;
-  });
+function bindPair(r, n) {
+  r.oninput = () => n.value = r.value;
+  n.oninput = () => { let v = Math.max(0, Math.min(1, n.value)); n.value = v; r.value = v; };
+}
+bindPair(splitP, splitP_num); bindPair(splitS, splitS_num); bindPair(splitB, splitB_num);
+bindPair(deathN, deathN_num); bindPair(deathP, deathP_num); bindPair(deathS, deathS_num); bindPair(deathB, deathB_num);
+
+// 移動判定（重なり回避ロジック付き）
+function tryMove(a, map) {
+  const r = Math.random();
+  if (r < 0.5) return; 
+
+  const dirs = [[1,0], [-1,0], [0,1], [0,-1]].sort(() => Math.random() - 0.5);
+  let targetType = a.type === 'plankton' ? 'nutrient' : 
+                   a.type === 'smallFish' ? 'plankton' : 
+                   a.type === 'bigFish' ? 'smallFish' : null;
+
+  for (let d of dirs) {
+    let nx = (a.x + d[0] + GRID) % GRID;
+    let ny = (a.y + d[1] + GRID) % GRID;
+    let cell = map[nx + ',' + ny];
+
+    // 同種がいたらそのマスへは行けない
+    if (cell && cell.some(o => o.type === a.type)) continue;
+
+    // 捕食ターゲットがいる、または空き地なら移動決定
+    if (!targetType || (cell && cell.some(o => o.type === targetType)) || !cell) {
+      a.x = nx; a.y = ny;
+      return;
+    }
+  }
 }
 
-// バインド
-bindPair(splitN, splitN_num);
-bindPair(splitP, splitP_num);
-bindPair(splitS, splitS_num);
-bindPair(splitB, splitB_num);
-bindPair(deathN, deathN_num);
-bindPair(deathP, deathP_num);
-bindPair(deathS, deathS_num);
-bindPair(deathB, deathB_num);
+function update() {
+  const points = [
+    {x:0, y:0, on:srcTL.checked}, {x:GRID-1, y:0, on:srcTR.checked},
+    {x:0, y:GRID-1, on:srcBL.checked}, {x:GRID-1, y:GRID-1, on:srcBR.checked}, {x:20, y:20, on:srcC.checked}
+  ];
+  points.forEach(p => { if(p.on) for(let i=0; i<2; i++) agents.push({x:p.x, y:p.y, type:'nutrient'}); });
 
-resetSim();
-
-function move(a){
-  a.x=(a.x+Math.floor(Math.random()*3)-1+GRID)%GRID;
-  a.y=(a.y+Math.floor(Math.random()*3)-1+GRID)%GRID;
-}
-
-function update(){
-  // 左上から栄養供給
-  for(let i=0;i<5;i++)agents.push({x:0,y:0,type:'nutrient'});
-
-  agents.forEach(move);
-
-  let map={};
-  agents.forEach(a=>{
-    let k=a.x+','+a.y;
-    if(!map[k])map[k]=[];
+  let map = {};
+  agents.forEach(a => {
+    let k = a.x + ',' + a.y;
+    if (!map[k]) map[k] = [];
     map[k].push(a);
   });
 
-  let next=[];
+  agents.forEach(a => tryMove(a, map));
 
-  for(let k in map){
-    let cell=map[k];
-    let hasN=cell.find(a=>a.type==='nutrient');
-    let hasP=cell.find(a=>a.type==='plankton');
-    let hasS=cell.find(a=>a.type==='smallFish');
-    let hasB=cell.find(a=>a.type==='bigFish');
+  let nextMap = {};
+  agents.forEach(a => {
+    let k = a.x + ',' + a.y;
+    if (!nextMap[k]) nextMap[k] = [];
+    nextMap[k].push(a);
+  });
 
-    // 捕食変換
-    if(hasN && Math.random()<splitP.value) next.push({x:hasN.x,y:hasN.y,type:'plankton'});
-    else if(hasP && hasS && Math.random()<splitS.value) next.push({x:hasP.x,y:hasP.y,type:'smallFish'});
-    else if(hasS && hasB && Math.random()<splitB.value) next.push({x:hasS.x,y:hasS.y,type:'bigFish'});
-    else next.push(...cell);
+  let nextAgents = [];
+  for (let k in nextMap) {
+    let cell = nextMap[k];
+    let groups = { nutrient:[], plankton:[], smallFish:[], bigFish:[] };
+    cell.forEach(a => groups[a.type].push(a));
+
+    const interact = (predators, prey, splitProb, type) => {
+      if (predators.length && prey.length) {
+        prey.pop(); 
+        if (Math.random() < splitProb) {
+           // 繁殖時も同じマスに同種が重ならないようにチェック
+           // 簡易的に隣接マスに空きがあれば産む、なければ産まない
+           nextAgents.push({x: predators[0].x, y: predators[0].y, type});
+        }
+      }
+    };
+    interact(groups.plankton, groups.nutrient, +splitP.value, 'plankton');
+    interact(groups.smallFish, groups.plankton, +splitS.value, 'smallFish');
+    interact(groups.bigFish, groups.smallFish, +splitB.value, 'bigFish');
+    Object.values(groups).forEach(g => nextAgents.push(...g));
   }
 
-  // 分裂
-  next.forEach(a=>{
-    let prob= a.type==='nutrient'?splitN.value:
-              a.type==='plankton'?splitP.value:
-              a.type==='smallFish'?splitS.value:splitB.value;
-    if(Math.random()<prob){
-      next.push({x:a.x,y:a.y,type:a.type});
+  agents = nextAgents.filter(a => {
+    let d = a.type === 'nutrient' ? +deathN.value : a.type === 'plankton' ? +deathP.value : a.type === 'smallFish' ? +deathS.value : +deathB.value;
+    return Math.random() > d;
+  });
+
+  const counts = { nutrient:0, plankton:0, smallFish:0, bigFish:0 };
+  agents.forEach(a => counts[a.type]++);
+  history.push(counts);
+  if (history.length > MAX_HISTORY) history.shift();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, 400, 400);
+  agents.forEach(a => {
+    ctx.fillStyle = COLORS[a.type];
+    ctx.fillRect(a.x * SIZE, a.y * SIZE, SIZE-1, SIZE-1); // 境界が見えやすいよう-1
+  });
+
+  // 円グラフ
+  pctx.clearRect(0, 0, 320, 180);
+  let total = agents.length || 1;
+  let start = 0;
+  const latest = history[history.length-1] || { nutrient:0, plankton:0, smallFish:0, bigFish:0 };
+  KEYS_STACK.forEach(k => {
+    let ratio = latest[k] / total;
+    pctx.beginPath(); pctx.moveTo(160, 90);
+    pctx.arc(160, 90, 60, start, start + ratio * Math.PI * 2);
+    pctx.fillStyle = COLORS[k]; pctx.fill();
+    start += ratio * Math.PI * 2;
+  });
+
+  // 積層エリアグラフ
+  lctx.clearRect(0, 0, 320, 400);
+  const padL = 45, padR = 20, padT = 30, padB = 40;
+  const gw = 320 - padL - padR;
+  const gh = 400 - padT - padB;
+  
+  let maxTotal = 100;
+  history.forEach(h => {
+    let sum = h.nutrient + h.plankton + h.smallFish + h.bigFish;
+    if(sum > maxTotal) maxTotal = sum;
+  });
+  maxTotal = Math.ceil(maxTotal / 50) * 50; // 目盛りをきれいに
+
+  // 目盛りの描画
+  lctx.font = "10px sans-serif";
+  lctx.fillStyle = "#888";
+  lctx.textAlign = "right";
+  lctx.strokeStyle = "#444";
+  for(let i=0; i <= maxTotal; i += 50) {
+    let y = padT + gh - (i / maxTotal) * gh;
+    lctx.fillText(i, padL - 10, y + 4);
+    lctx.beginPath(); lctx.moveTo(padL, y); lctx.lineTo(padL + gw, y); lctx.stroke();
+  }
+
+  let currentBottoms = new Array(history.length).fill(0);
+  KEYS_STACK.forEach(k => {
+    lctx.beginPath();
+    lctx.fillStyle = COLORS[k];
+    lctx.moveTo(padL, padT + gh);
+    history.forEach((h, i) => {
+      let x = padL + (i / (MAX_HISTORY - 1)) * gw;
+      let y = padT + gh - ((currentBottoms[i] + h[k]) / maxTotal) * gh;
+      lctx.lineTo(x, y);
+    });
+    for (let i = history.length - 1; i >= 0; i--) {
+      let x = padL + (i / (MAX_HISTORY - 1)) * gw;
+      let y = padT + gh - (currentBottoms[i] / maxTotal) * gh;
+      lctx.lineTo(x, y);
+      currentBottoms[i] += history[i][k];
     }
+    lctx.closePath(); lctx.fill();
   });
-
-  // 死亡
-  agents=next.filter(a=>{
-    let prob= a.type==='nutrient'?deathN.value:
-              a.type==='plankton'?deathP.value:
-              a.type==='smallFish'?deathS.value:deathB.value;
-    return Math.random()>prob;
-  });
+  
+  // 軸線
+  lctx.strokeStyle = "#eee";
+  lctx.beginPath();
+  lctx.moveTo(padL, padT); lctx.lineTo(padL, padT + gh); lctx.lineTo(padL + gw, padT + gh);
+  lctx.stroke();
 }
 
-function draw(){
-  ctx.fillStyle='white';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  agents.forEach(a=>{
-    let c='black';
-    if(a.type==='nutrient')c='blue';
-    if(a.type==='plankton')c='green';
-    if(a.type==='smallFish')c='yellow';
-    if(a.type==='bigFish')c='red';
-    ctx.fillStyle=c;
-    ctx.fillRect(a.x*SIZE,a.y*SIZE,SIZE,SIZE);
-  });
-}
-
-function loop(){
+function loop() {
   frame++;
-  if(frame%10===0)update();
+  if (frame % 3 === 0) update();
   draw();
   requestAnimationFrame(loop);
 }
 
+resetSim();
 loop();
 </script>
 </body>

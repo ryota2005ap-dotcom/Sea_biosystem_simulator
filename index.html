@@ -2,20 +2,22 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<title>Marine Ecosystem - Advanced Stacked Simulation</title>
+<title>Marine Ecosystem - Advanced Simulation v2</title>
 <style>
-  body { margin: 0; background: #111; color: #eee; font-family: sans-serif; display: flex; overflow: hidden; }
-  #ui { padding: 15px; width: 260px; background: #222; height: 100vh; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.5); z-index: 10; }
-  #main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1a1a; }
+  body { margin: 0; background: #111; color: #eee; font-family: sans-serif; display: flex; overflow: hidden; height: 100vh; }
+  #ui { padding: 15px; width: 240px; background: #222; height: 100vh; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.5); z-index: 10; font-size: 13px; }
+  #main { flex: 1; display: flex; align-items: center; justify-content: center; background: #1a1a1a; }
   canvas { border: 1px solid #444; background: #fff; }
-  #sim { width: 500px; height: 500px; image-rendering: pixelated; }
-  .charts-container { display: flex; flex-direction: column; gap: 10px; padding: 10px; background: #222; width: 320px; }
-  #pieChart { width: 320px; height: 180px; }
-  #lineChart { width: 320px; height: 400px; }
+  #sim { width: 550px; height: 550px; image-rendering: pixelated; }
+  
+  .charts-container { display: flex; flex-direction: column; gap: 8px; padding: 10px; background: #222; width: 340px; overflow-y: auto; }
+  .chart-box { background: #2a2a2a; border-radius: 4px; padding: 5px; }
+  .chart-title { font-size: 11px; color: #0cf; margin-bottom: 4px; text-align: center; font-weight: bold; }
+  
   label { display: block; margin-top: 8px; font-size: 11px; color: #bbb; }
   .row { display: flex; gap: 6px; align-items: center; }
   .row input[type="range"] { flex: 1; }
-  .row input[type="number"] { width: 55px; background: #333; color: #fff; border: 1px solid #555; }
+  .row input[type="number"] { width: 50px; background: #333; color: #fff; border: 1px solid #555; }
   button { margin-top: 15px; width: 100%; padding: 10px; background: #068; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
   button:hover { background: #08a; }
   b { color: #0cf; font-size: 14px; display: block; margin-top: 10px; border-bottom: 1px solid #444; padding-bottom: 3px; }
@@ -31,15 +33,15 @@
   <label>BigFish<input id="initB" type="number" value="50"></label>
 
   <b>繁殖確率</b>
-  <label>P (分列)<div class="row"><input id="splitP" type="range" min="0" max="1" step="0.01" value="1"><input id="splitP_num" type="number" value="1"></div></label>
+  <label>P (分列)<div class="row"><input id="splitP" type="range" min="0" max="1" step="0.01" value="0.8"><input id="splitP_num" type="number" value="0.8"></div></label>
   <label>S (繁殖)<div class="row"><input id="splitS" type="range" min="0" max="1" step="0.01" value="0.5"><input id="splitS_num" type="number" value="0.5"></div></label>
   <label>B (繁殖)<div class="row"><input id="splitB" type="range" min="0" max="1" step="0.01" value="0.3"><input id="splitB_num" type="number" value="0.3"></div></label>
 
   <b>死亡確率</b>
-  <label>N<div class="row"><input id="deathN" type="range" min="0" max="1" step="0" value="0"><input id="deathN_num" type="number" value="0"></div></label>
-  <label>P<div class="row"><input id="deathP" type="range" min="0" max="1" step="0.01" value="0"><input id="deathP_num" type="number" value="0"></div></label>
-  <label>S<div class="row"><input id="deathS" type="range" min="0" max="1" step="0.01" value="0.02"><input id="deathS_num" type="number" value="0.02"></div></label>
-  <label>B<div class="row"><input id="deathB" type="range" min="0" max="1" step="0.01" value="0.01"><input id="deathB_num" type="number" value="0.01"></div></label>
+  <label>N<div class="row"><input id="deathN" type="range" min="0" max="1" step="0.01" value="0.01"><input id="deathN_num" type="number" value="0.01"></div></label>
+  <label>P<div class="row"><input id="deathP" type="range" min="0" max="1" step="0.01" value="0.02"><input id="deathP_num" type="number" value="0.02"></div></label>
+  <label>S<div class="row"><input id="deathS" type="range" min="0" max="1" step="0.01" value="0.03"><input id="deathS_num" type="number" value="0.03"></div></label>
+  <label>B<div class="row"><input id="deathB" type="range" min="0" max="1" step="0.01" value="0.02"><input id="deathB_num" type="number" value="0.02"></div></label>
 
   <b>栄養源供給</b>
   <label><input type="checkbox" id="srcTL" checked> 左上</label>
@@ -56,8 +58,18 @@
 </div>
 
 <div class="charts-container">
-  <canvas id="pieChart" width="320" height="180"></canvas>
-  <canvas id="lineChart" width="320" height="400"></canvas>
+  <div class="chart-box">
+    <div class="chart-title">POPULATION PIE</div>
+    <canvas id="pieChart" width="320" height="140"></canvas>
+  </div>
+  <div class="chart-box">
+    <div class="chart-title">STACKED AREA (Total: Water Level)</div>
+    <canvas id="lineChart" width="320" height="240"></canvas>
+  </div>
+  <div class="chart-box">
+    <div class="chart-title">RATE OF CHANGE (Derivative /sec)</div>
+    <canvas id="diffChart" width="320" height="200"></canvas>
+  </div>
 </div>
 
 <script>
@@ -65,12 +77,14 @@ const canvas = document.getElementById('sim');
 const ctx = canvas.getContext('2d');
 const pctx = document.getElementById('pieChart').getContext('2d');
 const lctx = document.getElementById('lineChart').getContext('2d');
+const dctx = document.getElementById('diffChart').getContext('2d');
 
 const GRID = 40;
 const SIZE = canvas.width / GRID;
 let agents = [];
 let history = [];
-const MAX_HISTORY = 180; // 約10秒分（3倍に増加）
+const MAX_HISTORY = 120; // グラフ表示期間
+const DIFF_GAP = 20;    // 1秒間の変化を見るためのスパン（20更新 ≒ 約1秒）
 let frame = 0;
 
 const COLORS = {
@@ -79,8 +93,7 @@ const COLORS = {
   plankton: '#2ecc71',
   nutrient: '#3498db'
 };
-
-const KEYS_STACK = ['bigFish', 'smallFish', 'plankton', 'nutrient'];
+const KEYS = ['bigFish', 'smallFish', 'plankton', 'nutrient'];
 
 function randPos() { return Math.floor(Math.random() * GRID); }
 
@@ -100,38 +113,27 @@ function bindPair(r, n) {
 bindPair(splitP, splitP_num); bindPair(splitS, splitS_num); bindPair(splitB, splitB_num);
 bindPair(deathN, deathN_num); bindPair(deathP, deathP_num); bindPair(deathS, deathS_num); bindPair(deathB, deathB_num);
 
-// 移動判定（重なり回避ロジック付き）
 function tryMove(a, map) {
-  const r = Math.random();
-  if (r < 0.5) return; 
-
+  if (Math.random() < 0.3) return; 
   const dirs = [[1,0], [-1,0], [0,1], [0,-1]].sort(() => Math.random() - 0.5);
-  let targetType = a.type === 'plankton' ? 'nutrient' : 
-                   a.type === 'smallFish' ? 'plankton' : 
-                   a.type === 'bigFish' ? 'smallFish' : null;
-
   for (let d of dirs) {
     let nx = (a.x + d[0] + GRID) % GRID;
     let ny = (a.y + d[1] + GRID) % GRID;
-    let cell = map[nx + ',' + ny];
-
-    // 同種がいたらそのマスへは行けない
-    if (cell && cell.some(o => o.type === a.type)) continue;
-
-    // 捕食ターゲットがいる、または空き地なら移動決定
-    if (!targetType || (cell && cell.some(o => o.type === targetType)) || !cell) {
-      a.x = nx; a.y = ny;
-      return;
-    }
+    let targetKey = nx + ',' + ny;
+    // 同種の存在チェック（重なり制限）
+    if (map[targetKey] && map[targetKey].some(o => o.type === a.type)) continue;
+    a.x = nx; a.y = ny;
+    break;
   }
 }
 
 function update() {
+  // 栄養供給
   const points = [
     {x:0, y:0, on:srcTL.checked}, {x:GRID-1, y:0, on:srcTR.checked},
     {x:0, y:GRID-1, on:srcBL.checked}, {x:GRID-1, y:GRID-1, on:srcBR.checked}, {x:20, y:20, on:srcC.checked}
   ];
-  points.forEach(p => { if(p.on) for(let i=0; i<2; i++) agents.push({x:p.x, y:p.y, type:'nutrient'}); });
+  points.forEach(p => { if(p.on && Math.random() > 0.5) agents.push({x:p.x, y:p.y, type:'nutrient'}); });
 
   let map = {};
   agents.forEach(a => {
@@ -140,37 +142,34 @@ function update() {
     map[k].push(a);
   });
 
+  // 移動
   agents.forEach(a => tryMove(a, map));
 
-  let nextMap = {};
+  // 相互作用（捕食・繁殖）
+  let nextAgents = [];
+  let cellMap = {};
   agents.forEach(a => {
     let k = a.x + ',' + a.y;
-    if (!nextMap[k]) nextMap[k] = [];
-    nextMap[k].push(a);
+    if (!cellMap[k]) cellMap[k] = { nutrient:[], plankton:[], smallFish:[], bigFish:[] };
+    cellMap[k][a.type].push(a);
   });
 
-  let nextAgents = [];
-  for (let k in nextMap) {
-    let cell = nextMap[k];
-    let groups = { nutrient:[], plankton:[], smallFish:[], bigFish:[] };
-    cell.forEach(a => groups[a.type].push(a));
-
-    const interact = (predators, prey, splitProb, type) => {
-      if (predators.length && prey.length) {
-        prey.pop(); 
-        if (Math.random() < splitProb) {
-           // 繁殖時も同じマスに同種が重ならないようにチェック
-           // 簡易的に隣接マスに空きがあれば産む、なければ産まない
-           nextAgents.push({x: predators[0].x, y: predators[0].y, type});
-        }
+  for (let k in cellMap) {
+    let c = cellMap[k];
+    const interact = (preds, prey, prob, type) => {
+      if (preds.length > 0 && prey.length > 0) {
+        prey.splice(0, 1); // 捕食
+        if (Math.random() < prob) preds.push({x: preds[0].x, y: preds[0].y, type: type}); // 繁殖
       }
     };
-    interact(groups.plankton, groups.nutrient, +splitP.value, 'plankton');
-    interact(groups.smallFish, groups.plankton, +splitS.value, 'smallFish');
-    interact(groups.bigFish, groups.smallFish, +splitB.value, 'bigFish');
-    Object.values(groups).forEach(g => nextAgents.push(...g));
+    interact(c.plankton, c.nutrient, +splitP.value, 'plankton');
+    interact(c.smallFish, c.plankton, +splitS.value, 'smallFish');
+    interact(c.bigFish, c.smallFish, +splitB.value, 'bigFish');
+    
+    KEYS.forEach(type => nextAgents.push(...c[type]));
   }
 
+  // 自然死
   agents = nextAgents.filter(a => {
     let d = a.type === 'nutrient' ? +deathN.value : a.type === 'plankton' ? +deathP.value : a.type === 'smallFish' ? +deathS.value : +deathB.value;
     return Math.random() > d;
@@ -179,77 +178,86 @@ function update() {
   const counts = { nutrient:0, plankton:0, smallFish:0, bigFish:0 };
   agents.forEach(a => counts[a.type]++);
   history.push(counts);
-  if (history.length > MAX_HISTORY) history.shift();
+  if (history.length > MAX_HISTORY + DIFF_GAP) history.shift();
 }
 
 function draw() {
   ctx.clearRect(0, 0, 400, 400);
   agents.forEach(a => {
     ctx.fillStyle = COLORS[a.type];
-    ctx.fillRect(a.x * SIZE, a.y * SIZE, SIZE-1, SIZE-1); // 境界が見えやすいよう-1
+    ctx.fillRect(a.x * SIZE, a.y * SIZE, SIZE-1, SIZE-1);
   });
 
-  // 円グラフ
-  pctx.clearRect(0, 0, 320, 180);
+  // 1. 円グラフ
+  pctx.clearRect(0, 0, 320, 140);
   let total = agents.length || 1;
   let start = 0;
-  const latest = history[history.length-1] || { nutrient:0, plankton:0, smallFish:0, bigFish:0 };
-  KEYS_STACK.forEach(k => {
+  const latest = history[history.length-1] || counts;
+  KEYS.forEach(k => {
     let ratio = latest[k] / total;
-    pctx.beginPath(); pctx.moveTo(160, 90);
-    pctx.arc(160, 90, 60, start, start + ratio * Math.PI * 2);
+    pctx.beginPath(); pctx.moveTo(160, 70);
+    pctx.arc(160, 70, 50, start, start + ratio * Math.PI * 2);
     pctx.fillStyle = COLORS[k]; pctx.fill();
     start += ratio * Math.PI * 2;
   });
 
-  // 積層エリアグラフ
-  lctx.clearRect(0, 0, 320, 400);
-  const padL = 45, padR = 20, padT = 30, padB = 40;
-  const gw = 320 - padL - padR;
-  const gh = 400 - padT - padB;
+  // 2. 積層エリアグラフ (水位)
+  const pad = {l:40, r:10, t:20, b:20};
+  const gw = 320 - pad.l - pad.r, gh = 240 - pad.t - pad.b;
+  lctx.clearRect(0, 0, 320, 240);
   
-  let maxTotal = 100;
-  history.forEach(h => {
-    let sum = h.nutrient + h.plankton + h.smallFish + h.bigFish;
-    if(sum > maxTotal) maxTotal = sum;
+  let maxVal = 200;
+  let displayHistory = history.slice(-MAX_HISTORY);
+  displayHistory.forEach(h => {
+    let s = h.nutrient + h.plankton + h.smallFish + h.bigFish;
+    if(s > maxVal) maxVal = s;
   });
-  maxTotal = Math.ceil(maxTotal / 50) * 50; // 目盛りをきれいに
 
-  // 目盛りの描画
-  lctx.font = "10px sans-serif";
-  lctx.fillStyle = "#888";
-  lctx.textAlign = "right";
-  lctx.strokeStyle = "#444";
-  for(let i=0; i <= maxTotal; i += 50) {
-    let y = padT + gh - (i / maxTotal) * gh;
-    lctx.fillText(i, padL - 10, y + 4);
-    lctx.beginPath(); lctx.moveTo(padL, y); lctx.lineTo(padL + gw, y); lctx.stroke();
-  }
-
-  let currentBottoms = new Array(history.length).fill(0);
-  KEYS_STACK.forEach(k => {
-    lctx.beginPath();
+  let bottom = new Array(displayHistory.length).fill(0);
+  [...KEYS].reverse().forEach(k => {
     lctx.fillStyle = COLORS[k];
-    lctx.moveTo(padL, padT + gh);
-    history.forEach((h, i) => {
-      let x = padL + (i / (MAX_HISTORY - 1)) * gw;
-      let y = padT + gh - ((currentBottoms[i] + h[k]) / maxTotal) * gh;
+    lctx.beginPath();
+    lctx.moveTo(pad.l, pad.t + gh);
+    displayHistory.forEach((h, i) => {
+      let x = pad.l + (i / (MAX_HISTORY-1)) * gw;
+      let y = pad.t + gh - ((bottom[i] + h[k]) / maxVal) * gh;
       lctx.lineTo(x, y);
     });
-    for (let i = history.length - 1; i >= 0; i--) {
-      let x = padL + (i / (MAX_HISTORY - 1)) * gw;
-      let y = padT + gh - (currentBottoms[i] / maxTotal) * gh;
+    for(let i=displayHistory.length-1; i>=0; i--){
+      let x = pad.l + (i / (MAX_HISTORY-1)) * gw;
+      let y = pad.t + gh - (bottom[i] / maxVal) * gh;
       lctx.lineTo(x, y);
-      currentBottoms[i] += history[i][k];
+      bottom[i] += displayHistory[i][k];
     }
-    lctx.closePath(); lctx.fill();
+    lctx.fill();
   });
+
+  // 3. 変化率グラフ (微分イメージ)
+  dctx.clearRect(0, 0, 320, 200);
+  const dh = 200 - pad.t - pad.b;
+  const zeroY = pad.t + dh/2;
   
-  // 軸線
-  lctx.strokeStyle = "#eee";
-  lctx.beginPath();
-  lctx.moveTo(padL, padT); lctx.lineTo(padL, padT + gh); lctx.lineTo(padL + gw, padT + gh);
-  lctx.stroke();
+  dctx.strokeStyle = "#444";
+  dctx.beginPath(); dctx.moveTo(pad.l, zeroY); dctx.lineTo(pad.l+gw, zeroY); dctx.stroke();
+
+  if (history.length > DIFF_GAP) {
+    KEYS.forEach(k => {
+      dctx.strokeStyle = COLORS[k];
+      dctx.lineWidth = 2;
+      dctx.beginPath();
+      for(let i=0; i < displayHistory.length; i++) {
+        let currIdx = history.length - displayHistory.length + i;
+        let prevIdx = currIdx - DIFF_GAP;
+        if(prevIdx < 0) continue;
+        
+        let diff = history[currIdx][k] - history[prevIdx][k];
+        let x = pad.l + (i / (MAX_HISTORY-1)) * gw;
+        let y = zeroY - (diff / 30) * (dh/2); // スケール調整
+        if(i === 0) dctx.moveTo(x, y); else dctx.lineTo(x, y);
+      }
+      dctx.stroke();
+    });
+  }
 }
 
 function loop() {
